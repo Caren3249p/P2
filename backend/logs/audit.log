@@ -72,3 +72,5 @@
 {"level":"info","message":"Servidor corriendo en puerto 3000 [development]","service":"nexus-battles-v","timestamp":"2026-04-08T05:27:56.573Z"}
 {"level":"info","message":"Conexión a MySQL/TiDB establecida","service":"nexus-battles-v","timestamp":"2026-04-08T05:34:01.356Z"}
 {"level":"info","message":"Servidor corriendo en puerto 3000 [development]","service":"nexus-battles-v","timestamp":"2026-04-08T05:34:01.371Z"}
+{"level":"info","message":"Conexión a MySQL/TiDB establecida","service":"nexus-battles-v","timestamp":"2026-04-08T16:06:21.924Z"}
+{"level":"info","message":"Servidor corriendo en puerto 3000 [development]","service":"nexus-battles-v","timestamp":"2026-04-08T16:06:21.957Z"}
