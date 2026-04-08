@@ -12,30 +12,14 @@ import { errorHandler }   from './infrastructure/http/middlewares/errorHandler';
 // Importamos ÚNICAMENTE la función de prueba, el pool se queda en su archivo
 import { testConnection } from './infrastructure/database/connection';
 
-// ── Rutas v1 (núcleo / Player) ────────────────────────────────────────────────
+// ── Rutas v1 ────────────────────────────────────────────────
 import authRoutes    from './infrastructure/http/routes/authRoutes';
-import auctionRoutes from './infrastructure/http/routes/auctionRoutes';
-import missionRoutes from './infrastructure/http/routes/missionRoutes';
-import paymentRoutes from './infrastructure/http/routes/paymentRoutes';
-import playerRoutes  from './infrastructure/http/routes/playerRoutes';
-import cartRoutes    from './infrastructure/http/routes/cartRoutes';
-import productRoutes from './infrastructure/http/routes/productRoutes';
 
-// ── Rutas con factory (Inventario + Rating + Auth v2) ─────────────────────────
+// ── Rutas con factory (Inventario) ─────────────────────────
 import { createInventoryRoutes } from './infrastructure/http/routes/inventory.routes';
-import { createRatingRoutes }    from './infrastructure/http/routes/rating.routes';
-import { createAuthRoutes }      from './infrastructure/http/routes/auth.routes';
 
 // ── Repositorios ──────────────────────────────────────────────────────────────
 import { MySQLItemRepository }    from './infrastructure/repositories/MySQLItemRepository';
-import { MySQLRatingRepository }  from './infrastructure/repositories/MySQLRatingRepository';
-import { MySQLProductRepository } from './infrastructure/repositories/MySQLProductRepository';
-import { UserRepositoryMySQL }    from './infrastructure/persistence/repositories/UserRepositoryMysql';
-
-// ── Infraestructura de seguridad ──────────────────────────────────────────────
-import { BcryptHasher }    from './infrastructure/security/BcrypHasher';
-import { JwtTokenService } from './infrastructure/security/JwtTokenServices';
-import { EmailService }    from './infrastructure/gateways/EmailService';
 
 // ── Use Cases ─────────────────────────────────────────────────────────────────
 import { SearchItems }       from './application/usecases/inventory/SearchItem';
@@ -47,14 +31,9 @@ import { UpdateItem }        from './application/usecases/inventory/UpdateItem';
 import { SoftDeleteItem }    from './application/usecases/inventory/SoftDeleteItem';
 import { ReactivateItem }    from './application/usecases/inventory/ReactivateItem';
 import { GetUserInventory }  from './application/usecases/inventory/GetUserInventory';
-import { RegisterUser }      from './application/usecases/auth/RegisterUser';
-import { LoginUser }         from './application/usecases/auth/LoginUser';
 
 // ── Controladores con DI ──────────────────────────────────────────────────────
 import { InventoryController } from './infrastructure/http/controllers/InventoryController';
-import { RatingController }    from './infrastructure/http/controllers/RatingController';
-import { AuthController }      from './infrastructure/http/controllers/AuthController';
-import { RatingService }       from './domain/services/RatingService';
 
 // ============================================================
 // INYECCIÓN DE DEPENDENCIAS
@@ -74,22 +53,7 @@ const inventoryController = new InventoryController(
   new GetUserInventory(itemRepository),
 );
 
-// Rating
-const ratingRepository  = new MySQLRatingRepository();
-const productRepository = new MySQLProductRepository();
-const ratingService     = new RatingService(ratingRepository, productRepository);
-const ratingController  = new RatingController(ratingService);
-
-// Auth v2
-const userRepository   = new UserRepositoryMySQL();
-const passwordHasher   = new BcryptHasher();
-const tokenService     = new JwtTokenService();
-const emailService     = new EmailService();
-const authControllerV2 = new AuthController(
-  new RegisterUser(userRepository, passwordHasher, tokenService, emailService),
-  new LoginUser(userRepository, passwordHasher, tokenService),
-);
-
+// Auth helpers
 // ============================================================
 // EXPRESS APP
 // ============================================================
@@ -110,8 +74,6 @@ const inventoryLimiter = rateLimit({ windowMs: 60 * 1000, max: 120, standardHead
 
 app.use('/api',             globalLimiter);
 app.use('/api/v1/auth',     sensitiveLimiter);
-app.use('/api/v2/auth',     sensitiveLimiter);
-app.use('/api/v1/payments', sensitiveLimiter);
 
 // ── Health check ───────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({
@@ -123,16 +85,7 @@ app.get('/health', (_req, res) => res.json({
 // RUTAS
 // ============================================================
 app.use('/api/v1/auth',     authRoutes);
-app.use('/api/v1/players',  playerRoutes);
-app.use('/api/v1/auctions', auctionRoutes);
-app.use('/api/v1/missions', missionRoutes);
-app.use('/api/v1/payments', paymentRoutes);
-app.use('/api/v1/cart',     cartRoutes);
-app.use('/api/v1/products', productRoutes);
-
 app.use('/api/v1/inventory', inventoryLimiter, createInventoryRoutes(inventoryController));
-app.use('/api/v1', createRatingRoutes(ratingController));
-app.use('/api/v2/auth', createAuthRoutes(authControllerV2));
 
 app.use(errorHandler);
 
