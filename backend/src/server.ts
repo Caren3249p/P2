@@ -11,6 +11,8 @@ import { logger } from './infrastructure/logging/logger';
 import { errorHandler }   from './infrastructure/http/middlewares/errorHandler';
 // Importamos ÚNICAMENTE la función de prueba, el pool se queda en su archivo
 import { testConnection } from './infrastructure/database/connection';
+//importarmos el heroe
+import { CrearHeroe } from './application/usecases/Heroes/CrearHeroe';
 
 // ── Rutas v1 (núcleo / Player) ────────────────────────────────────────────────
 import authRoutes    from './infrastructure/http/routes/authRoutes';
@@ -20,18 +22,19 @@ import paymentRoutes from './infrastructure/http/routes/paymentRoutes';
 import playerRoutes  from './infrastructure/http/routes/playerRoutes';
 import cartRoutes    from './infrastructure/http/routes/cartRoutes';
 import productRoutes from './infrastructure/http/routes/productRoutes';
+import { createHeroRoutes } from './infrastructure/http/routes/hero.routes';
 
 // ── Rutas con factory (Inventario + Rating + Auth v2) ─────────────────────────
 import { createInventoryRoutes } from './infrastructure/http/routes/inventory.routes';
 import { createRatingRoutes }    from './infrastructure/http/routes/rating.routes';
 import { createAuthRoutes }      from './infrastructure/http/routes/auth.routes';
-import { createAdminChatbotRoutes } from './infrastructure/http/routes/adminChatbot.routes';
 
 // ── Repositorios ──────────────────────────────────────────────────────────────
 import { MySQLItemRepository }    from './infrastructure/repositories/MySQLItemRepository';
 import { MySQLRatingRepository }  from './infrastructure/repositories/MySQLRatingRepository';
 import { MySQLProductRepository } from './infrastructure/repositories/MySQLProductRepository';
 import { UserRepositoryMySQL }    from './infrastructure/persistence/repositories/UserRepositoryMysql';
+import { MySQLHeroRepository } from './infrastructure/repositories/MySQLHeroRepository';
 
 // ── Infraestructura de seguridad ──────────────────────────────────────────────
 import { BcryptHasher }    from './infrastructure/security/BcrypHasher';
@@ -50,8 +53,9 @@ import { LoginUser }    from './application/usecases/auth/LoginUser';
 import { InventoryController } from './infrastructure/http/controllers/InventoryController';
 import { RatingController }    from './infrastructure/http/controllers/RatingController';
 import { AuthController }      from './infrastructure/http/controllers/AuthController';
-import { AdminChatbotController } from './infrastructure/http/controllers/AdminChatbotController';
 import { RatingService }       from './domain/services/RatingService';
+import { HeroController } from './infrastructure/http/controllers/HeroController';
+import { ObtenerHeroes } from './application/usecases/Heroes/ObtenerHeroes';
 
 // ============================================================
 // INYECCIÓN DE DEPENDENCIAS
@@ -64,6 +68,14 @@ const inventoryController = new InventoryController(
   new GetItems(itemRepository),
   new GetItemById(itemRepository),
   new DeleteItem(itemRepository),
+);
+
+//heroes
+const heroRepository = new MySQLHeroRepository();
+
+const heroController = new HeroController(
+  new CrearHeroe(heroRepository),
+  new ObtenerHeroes(heroRepository)
 );
 
 // Rating
@@ -81,8 +93,6 @@ const authControllerV2 = new AuthController(
   new RegisterUser(userRepository, passwordHasher, tokenService, emailService),
   new LoginUser(userRepository, passwordHasher, tokenService),
 );
-
-const adminChatbotController = new AdminChatbotController();
 
 // ============================================================
 // EXPRESS APP
@@ -127,10 +137,10 @@ app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/inventory', inventoryLimiter, createInventoryRoutes(inventoryController));
 app.use('/api/v1', createRatingRoutes(ratingController));
 app.use('/api/v2/auth', createAuthRoutes(authControllerV2));
-app.use('/api/admin-chatbot', createAdminChatbotRoutes(adminChatbotController));
 
 app.use(errorHandler);
-
+//heroes
+app.use('/api/v1', createHeroRoutes(heroController));
 // ============================================================
 // ARRANQUE
 // ============================================================

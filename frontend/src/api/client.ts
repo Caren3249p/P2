@@ -47,9 +47,9 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Cliente para chatbot/Python (Fetch :8001)
+// Cliente para chatbot/Python (Fetch :8000)
 export const chatbotFetch = (path: string, options?: RequestInit) => {
-  const base = import.meta.env.VITE_CHATBOT_URL || 'http://localhost:8001';
+  const base = import.meta.env.VITE_CHATBOT_URL || 'http://localhost:8000';
   return fetch(`${base}${path}`, {
     ...options,
     headers: {
